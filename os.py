@@ -1,5 +1,5 @@
 import os
-import datetime
+from datetime import datetime
 
 def makeOutDir(outDir=None):
     if not outDir:
