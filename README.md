@@ -14,6 +14,6 @@ Initialization
     * { Child path } must not exist before.
     * check the { Child path } is created.
 
-In the parent directory,
+Pus & Pull change of this in the parent directory,
 * Push : git subtree push --prefix { Child path } { Remote name } { Child branch }
 * Pull : git subtree pull --prefix { Child path } { Remote name } { Child branch }
