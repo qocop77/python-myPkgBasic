@@ -83,14 +83,14 @@ def drawSubSbplot (df, ax):
 def cm2inch(val):
     return val/2.54
 
-def drawBoxplotPy(numChartType, dfList, nameDict, pctAddList=[], pctHideStrList=[]):
+def drawBoxplotPy(numChartType, dfList, nameDict, pctAddList=[], pctHideStrList=[], figsizeCm=dict(w=5, h=10)):
     assert numChartType == 1 or numChartType ==2, "1 or 2 is only supported for nuChartType ..."
     subplotRows = len(dfList[0].columns)
     (fig, axes) = plt.subplots(
         squeeze=False
         , ncols=numChartType
         , nrows=subplotRows
-        , figsize=(numChartType * len(dfList) * cm2inch(5), subplotRows * cm2inch(10)))
+        , figsize=(numChartType * len(dfList) * cm2inch(figsizeCm["w"]), subplotRows * cm2inch(figsizeCm["h"])))
     plt.suptitle(nameDict["titleName"])
     for ax in axes.flat:
         ax.set(xlabel=nameDict["xAxisName"], ylabel=nameDict["yAxisName"])
