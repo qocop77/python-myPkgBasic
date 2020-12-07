@@ -1,10 +1,10 @@
 import os
 from datetime import datetime
 
-def makeOutDir(outDir=None):
+def makeOutDir(prefix="Out_", outDir=None):
     dayTime = datetime.now().strftime("%Y%m%d_%H%M%S")
     if not outDir:
-        outDirName = "Out_" + dayTime
+        outDirName = prefix + dayTime
         cwdPath = os.getcwd()
         outDir = os.path.join(cwdPath, outDirName)
     os.mkdir(outDir)
