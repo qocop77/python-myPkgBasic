@@ -44,7 +44,7 @@ def drawSubBoxplot (df, ax, pctAddList=[], pctHideStrList=[]):
     #     annotateBoxplot(bpdict, ax, pctStrList, pctHideStrList, x_loc=serIdx)
     # --- customized boxplot
     pctAddStrList = [str(pctAdd)+"%" for pctAdd in pctAddList]
-    dfStats = df.describe(percentiles=[x/100 for x in (pctDefList + pctAddList)])
+    dfStats = df.describe(percentiles=[float(x)/100 for x in (pctDefList + pctAddList)])
     boxes = []
     for dfName in dfStats:
         boxes += [dict
