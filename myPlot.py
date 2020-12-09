@@ -5,18 +5,23 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import xlsxwriter
-import myPkgBasic.os as myOs
+import myPkgBasic.myOs as myBasicOs
 
-def annotateBoxplot(bpdict, ax, pctStrList, pctHideStrList, x_offset=0.07, x_loc=0, annotate_params=None):
+
+def annotateBoxplot(
+    bpdict, ax, pctStrList, pctHideStrList, x_loc=0, x_offset=0.07, annotate_params=None
+):
     if annotate_params is None:
-        annotate_params = dict(xytext=(15, 10), textcoords='offset points', arrowprops={'arrowstyle':'->'})
-    valList  = []
-    valList += [bpdict['means'][x_loc].get_ydata()[0]]          # means
-    valList += [bpdict['caps'][x_loc*2].get_ydata()[0]]         # min
-    valList += [bpdict['boxes'][x_loc].get_ydata()[0]]          # 25%
-    valList += [bpdict['medians'][x_loc].get_ydata()[0]]        # 50%
-    valList += [bpdict['boxes'][x_loc].get_ydata()[2]]          # 75%
-    valList += [bpdict['caps'][(x_loc*2)+1].get_ydata()[0]]     # max
+        annotate_params = dict(
+            xytext=(15, 10), textcoords="offset points", arrowprops={"arrowstyle": "->"}
+        )
+    valList = []
+    valList += [bpdict["means"][x_loc].get_ydata()[0]]  # means
+    valList += [bpdict["caps"][x_loc * 2].get_ydata()[0]]  # min
+    valList += [bpdict["boxes"][x_loc].get_ydata()[0]]  # 25%
+    valList += [bpdict["medians"][x_loc].get_ydata()[0]]  # 50%
+    valList += [bpdict["boxes"][x_loc].get_ydata()[2]]  # 75%
+    valList += [bpdict["caps"][(x_loc * 2) + 1].get_ydata()[0]]  # max
     for (idx, _) in enumerate(pctStrList[6:]):
         valList += [bpdict["fliers"][x_loc].get_ydata()[idx]]
     for (idx, pctStr) in enumerate(pctStrList):
@@ -26,34 +31,51 @@ def annotateBoxplot(bpdict, ax, pctStrList, pctHideStrList, x_offset=0.07, x_loc
                 (x_loc + 1 + x_offset, valList[idx]),
                 **annotate_params
             )
-            x_offset = - x_offset
+            x_offset = -x_offset
     return {"75%": valList[4], "max": valList[5]}
 
-def drawSubSbplot (df, ax):
-    sns.stripplot(ax=ax, data=df, jitter=True, edgecolor="gray", color=".3", alpha=min(1, 500/len(df)))
+
+def drawSubSbplot(df, ax):
+    sns.stripplot(
+        ax=ax,
+        data=df,
+        jitter=True,
+        edgecolor="gray",
+        color=".3",
+        alpha=min(1, 500 / len(df)),
+    )
     # sns.swarmplot(ax=ax, data=df, color=".3") # --- if N is too big, use stripplot instead of swarmplot
     # sns.violinplot(ax=ax, data=df)
-    sns.boxplot(ax=ax, data=df, whis=1.5, showmeans=True, showfliers=True, width=.25)
+    sns.boxplot(ax=ax, data=df, whis=1.5, showmeans=True, showfliers=True, width=0.25)
 
-def drawSubBoxplot (df, ax, pctHideStrList=[]):
+
+def drawSubBoxplot(df, ax, pctHideStrList=[]):
     pctDefStrList = ["mean", "min_1.5IQR", "25%", "50%", "75%", "max_1.5IQR"]
-    bpdict = df.boxplot(ax=ax, return_type='dict'
-        , column=df.columns.to_list()
-        , showmeans=True , showfliers=True
-        , notch=False , fontsize=7
-        , flierprops=dict(markerfacecolor='r', marker='s')
+    bpdict = df.boxplot(
+        ax=ax,
+        return_type="dict",
+        column=df.columns.to_list(),
+        showmeans=True,
+        showfliers=True,
+        notch=False,
+        fontsize=7,
+        flierprops=dict(markerfacecolor="r", marker="s"),
     )
-    ylim_top = -sys.maxsize-1
+    ylimMax = -sys.maxsize - 1
     for (serIdx, _) in enumerate(df):
-        y75 = annotateBoxplot(bpdict, ax, pctDefStrList, pctHideStrList, x_loc=serIdx)["75%"]
-        ylim_top = y75 if ylim_top < y75 else ylim_top
-    ax.set_ylim(top=ylim_top*1.1)
+        pctStrList = pctDefStrList
+        ylim = annotateBoxplot(bpdict, ax, pctDefStrList, pctHideStrList, serIdx)["max"]
+        ylimMax = ylim if ylimMax < ylim else ylimMax
+    ax.set_ylim(ymax=ylimMax * 1.2)
 
-def drawSubBoxplotCustom (df, ax, pctAddList=[], pctHideStrList=[]):
+
+def drawSubBoxplotCustom(df, ax, pctAddList=[], pctHideStrList=[]):
     pctDefList = [0, 25, 50, 75, 100]
     pctDefStrList = ["mean", "min", "25%", "50%", "75%", "max"]
-    pctAddStrList = [str(pctAdd)+"%" for pctAdd in pctAddList]
-    dfStats = df.describe(percentiles=[float(x)/100 for x in (pctDefList + pctAddList)])
+    pctAddStrList = [str(pctAdd) + "%" for pctAdd in pctAddList]
+    dfStats = df.describe(
+        percentiles=[float(x) / 100 for x in (pctDefList + pctAddList)]
+    )
     boxes = []
     for dfName in dfStats:
         boxes += [
@@ -72,20 +94,36 @@ def drawSubBoxplotCustom (df, ax, pctAddList=[], pctHideStrList=[]):
             )
         ]
     bpdict = ax.bxp(boxes, showmeans=True, showfliers=True)
-    ylim_top = -sys.maxsize-1
+    ylimMax = -sys.maxsize - 1
     for (serIdx, _) in enumerate(df):
-        ncols=numChartType,
-        figsize=(
-            numChartType * len(dfList) * cm2inch(figsizeCm["w"]),
-        ),
-    )
-def drawBoxplotPy(ctypeList, dfList, nameDict, pctAddList=[], pctHideStrList=[], figsizeCm=dict(w=5, h=10)):
+        pctStrList = pctDefStrList + pctAddStrList
+        ylim = annotateBoxplot(bpdict, ax, pctStrList, pctHideStrList, serIdx)["max"]
+        ylimMax = ylim if ylimMax < ylim else ylimMax
+    ax.set_ylim(ymax=ylimMax * 1.2)
+
+
+def cm2inch(val):
+    return val / 2.54
+
+
+def drawBoxplotPy(
+    ctypeList,
+    dfList,
+    nameDict,
+    pctAddList=[],
+    pctHideStrList=[],
+    figsizeCm=dict(w=5, h=10),
+):
     subplotRows = len(dfList[0].columns)
     (fig, axes) = plt.subplots(
-        squeeze=False
-        , ncols=len(ctypeList)
-        , nrows=subplotRows
-        , figsize=(len(ctypeList) * len(dfList) * cm2inch(figsizeCm["w"]), subplotRows * cm2inch(figsizeCm["h"])))
+        squeeze=False,
+        ncols=len(ctypeList),
+        nrows=subplotRows,
+        figsize=(
+            len(ctypeList) * len(dfList) * cm2inch(figsizeCm["w"]),
+            subplotRows * cm2inch(figsizeCm["h"]),
+        ),
+    )
     plt.suptitle(nameDict["titleName"])
     for ax in axes.flat:
         ax.set(xlabel=nameDict["xAxisName"], ylabel=nameDict["yAxisName"])
