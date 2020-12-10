@@ -8,13 +8,7 @@ import xlsxwriter
 import myPkgBasic.myOs as myBasicOs
 
 
-def annotateBoxplot(
-    bpdict, ax, pctStrList, pctHideStrList, x_loc=0, x_offset=0.07, annotate_params=None
-):
-    if annotate_params is None:
-        annotate_params = dict(
-            xytext=(15, 10), textcoords="offset points", arrowprops={"arrowstyle": "->"}
-        )
+def annotateBoxplot(bpdict, ax, pctStrList, pctHideStrList, x_loc=0):
     valList = []
     valList += [bpdict["means"][x_loc].get_ydata()[0]]  # means
     valList += [bpdict["caps"][x_loc * 2].get_ydata()[0]]  # min
@@ -24,14 +18,23 @@ def annotateBoxplot(
     valList += [bpdict["caps"][(x_loc * 2) + 1].get_ydata()[0]]  # max
     for (idx, _) in enumerate(pctStrList[6:]):
         valList += [bpdict["fliers"][x_loc].get_ydata()[idx]]
-    for (idx, pctStr) in enumerate(pctStrList):
+    x_offset=0.05
+    x_text = 15
+    ha = "left"
+    for (idx, pctStr) in reversed(list(enumerate(pctStrList))):
+        isAnno = True
+        isAnno &= (pctStr not in pctHideStrList)
+        if idx < len(pctStrList)-1:
+            isAnno &= (abs(valList[idx]-valList[idx+1]) > 100)
         if not pctStr in pctHideStrList:
             ax.annotate(
                 "{} : {}".format(pctStr, np.round(valList[idx], 2)),
                 (x_loc + 1 + x_offset, valList[idx]),
-                **annotate_params
+                **{"xytext": (x_text, 100), "textcoords": "offset pixels", "ha": ha, "arrowprops": {"arrowstyle": "->"}}
             )
             x_offset = -x_offset
+            x_text = -x_text 
+            ha = "right" if ha == "left" else "left"
     return {"75%": valList[4], "max": valList[5]}
 
 
