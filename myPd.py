@@ -1,24 +1,30 @@
 import pandas as pd
 import numpy as np
 
+# --- 3D data
+# --- --- "C" = column of dataFrame for X-axis
+# --- --- "I" = index of dataFrame for Y-axis
+# --- --- "L" = list of dataFrame for Z-axis
+
 # --- The axis to be reduced is set to level=1 index in 2-level multi-indexes
+# --- [!] df in dfList must have its own 'name'
 def makeDfM(listName, dfList, reduce):
     if reduce == "index":
         dfM = pd.concat(dfList, axis="index", keys=[df.name for df in dfList], names=[listName, dfList[0].index.name])
-            # --- columns.name = "C"
+            # --- --- --- --- --- --- --- --- columns.name = "C"
             # --- index.name (level=0) = "L"
-            # --- index.name (level=1) = "I"    <-- to be reduced
+            # --- index.name (level=1) = "I" ( to be reduced )
     elif reduce == "list":
         dfM = pd.concat(dfList, axis="index", keys=[df.name for df in dfList], names=[listName, dfList[0].index.name])
         dfM = dfM.swaplevel(0, 1, axis="index")
-            # --- columns.name = "C"
+            # --- --- --- --- --- --- --- --- columns.name = "C"
             # --- index.name (level=0) = "I"
-            # --- index.name (level=1) = "L"    <-- to be reduced
+            # --- index.name (level=1) = "L" ( to be reduced )
     elif reduce == "columns":
         # --- 1) change C and L in dfList
         dfM = pd.concat(dfList, axis="columns", keys=[df.name for df in dfList], names=[listName, dfList[0].columns.name])
-            # --- columns.name (level=0) = "D"
-            # --- columns.name (level=1) = "C"
+            # --- --- --- --- --- --- --- --- columns.name (level=0) = "D"
+            # --- --- --- --- --- --- --- --- columns.name (level=1) = "C"
             # --- index.name = "I"
         dfNewList = []
         for col in dfList[0].columns:
@@ -32,9 +38,9 @@ def makeDfM(listName, dfList, reduce):
         # --- 2) handle it like the above "list" case
         dfM = pd.concat(dfList, axis="index", keys=[df.name for df in dfList], names=[listName, dfList[0].index.name])
         dfM = dfM.swaplevel(0, 1, axis="index")
-            # --- columns.name = "L"
+            # --- --- --- --- --- --- --- --- columns.name = "L"
             # --- index.name (level=0) = "I"
-            # --- index.name (level=1) = "C"    <-- to be reduced
+            # --- index.name (level=1) = "C" ( to be reduced )
     else:
         assert False, "not supported option '{}' for the parameter of 'reduce'".format(reduce)
     return dfM
@@ -44,21 +50,20 @@ def makeDfM(listName, dfList, reduce):
 # --- --- [df.name in dfList] = ["D_0", "D_1", ...]
 # --- --- df.columns = {"C": ["C_0", "C_1", ...]}
 # --- --- df.index = {"I": ["I_0", "I_1", ...]}
-def makeTestDfList():
-    numDf = 7  # ---number of df
+def makeDfList():
+    numList = 2  # ---number of df in dfList
     minN = 10  # ---min index count
     maxN = 20  # ---max index count
     # --- make dfList
     dfList = []
-    for bmIdx in list(range(numDf)):
+    for bmIdx in list(range(numList)):
         numItem = np.random.randint(minN, maxN + 1)
         dictList = [{"Frame": val+1} for val in list(range(0, numItem + 1))]
         df = pd.DataFrame(dictList)
         df.rename_axis(index="I", columns="C", inplace=True)
         df.name = "L_{}".format(bmIdx)
         dfList += [df]
-    retData = ("L", dfList)
-    # --- update dfList
+    # --- manuplate column items
     for (idx, df) in enumerate(dfList):
         mean = np.random.randint(1, 5 + 1)
         sigma = np.random.randint(1, 1 + 1)
@@ -76,7 +81,19 @@ def makeTestDfList():
         # df["pixel9"]  = np.random.normal(mean, sigma, size=len(df)) * 100 + offset
         # df["pixel10"]  = np.random.normal(mean, sigma, size=len(df)) * 100 + offset
         # df["pixel11"]  = np.random.normal(mean, sigma, size=len(df)) * 100 + offset
-    return retData
+    return ("L", dfList)
+
+def makeDfOuts(dfIn):
+    # print ("===== CntSum/Col0Sum==============================")
+    # dfCntSumCol0 = dfCntSum.divide(dfCntSum[dfCntSum.columns[0]], axis="index")
+    # print (dfCntSumCol0)
+    dfOut0 = dfIn
+    dfOut0.name =dfIn.name
+    dfOut1 = dfIn
+    dfOut1.name =dfIn.name
+    dfOut2 = dfIn
+    dfOut2.name =dfIn.name
+    return [(dfOut0, 1), (dfOut1, 11), (dfOut2, 12)]
 
 # ====================================================================================================
 # Private
@@ -90,9 +107,6 @@ def _testDfGroupPrint(dfM):
     # print ("===== Mean =======================================")
     # dfCntMean = dfG.mean()
     # print (dfCntMean)
-    # print ("===== CntSum/Col0Sum==============================")
-    # dfCntSumCol0 = dfCntSum.divide(dfCntSum[dfCntSum.columns[0]], axis="index")
-    # print (dfCntSumCol0)
 
 def _testDfGroup(listName, dfList):
     print ("\n===== ( reduce = index ) =======================================================")
@@ -107,9 +121,9 @@ def _testDfGroup(listName, dfList):
 
 def _testDfLoopPrint(dfM):
     dfG = dfM.groupby(axis="index", level=1)
-    for (name, df) in dfG:
+    for (gName, df) in dfG: # --- gName is the name to be reduced in level=1
         df = df.droplevel(axis="index", level=1)
-        print ("===== ( name = {} ) ============================================================".format(name))
+        print ("===== ( name = {} ) ============================================================".format(gName))
         print (df)
 
 def _testDfLoop(listName, dfList):
@@ -125,7 +139,7 @@ def _testDfLoop(listName, dfList):
     _testDfLoopPrint(dfM)
 
 if __name__ == "__main__":
-    (listName, dfList) = makeTestDfList()
+    (listName, dfList) = makeDfList()
     # --- [df.name in dfList] = ["D_0", "D_1", ...]
     # --- df.columns.name = "C"
     # --- df.index.name = "I"

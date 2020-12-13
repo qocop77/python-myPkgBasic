@@ -11,6 +11,25 @@ import myPkgBasic.myOs as myBasicOs
 # Public
 # ====================================================================================================
 
+def saveMyplot (df, cType, labelDict, figFile):
+    nRows = nCols = 1
+    (fig, ax2D) = makeSubplots (nRows, nCols, labelDict)
+    # fig.suptitle("Boxplot", fontsize=10)
+    for row in range(nRows):
+        for col in range(nCols):
+            if cType == 1:
+                drawLineplotSb(ax2D[row][col], df)
+            elif cType == 2:
+                drawBoxplotDf(ax2D[row][col], df, ["max","90%","mean"], [90]) 
+            elif cType == 3:
+                drawBoxplotSb(ax2D[row][col], df)
+            else:
+                drawLineplotSb(ax2D[row][col], df)
+    plt.savefig(figFile, dpi=70) 
+        # --- 34" with 3440x1440 -> 110 dpi
+        # --- 32" with 1920×1080 -> 70 dpi
+    plt.close()
+
 def drawLineplotSb(ax, df, labelDict={}):
     sns.lineplot(ax=ax, data=df)
     _setLabel(ax, labelDict)
@@ -50,7 +69,7 @@ def drawBoxplotDf(ax, df, annoPctList=["max", "75%", "50%", "mean"], userPctList
                 , whishi=dfStats[col].loc["max"]
                 , fliers=dfStats[col].loc[userPctStrList]
                 , flierprops=dict(markerfacecolor="r", marker="s")
-                , fontsize=5
+                , fontsize=10
             )]
         bpdict = ax.bxp(boxes, showmeans=True, showfliers=True)
     ymaxLim = -sys.maxsize - 1
@@ -60,17 +79,13 @@ def drawBoxplotDf(ax, df, annoPctList=["max", "75%", "50%", "mean"], userPctList
     ax.set_ylim(ymax=ymaxLim * 1.2)
     _setLabel(ax, labelDict)
 
-def makeSubplots (nRows, nCols, nSers, labelDict={}):
-    figSize = (nSers * _cm2inch(5), _cm2inch(15))
-    if nRows == nCols == 1:
-        axes = np.ndarray(shape=(1,1), dtype=object)
-        fig = plt.figure(figsize=figSize)
-        axes[0][0] = fig.add_axes([0.10, 0.10, 0.80, 0.80]) 
-    else:
-        (fig, axes) = plt.subplots(squeeze=False, nrows=nRows, ncols=nCols, figsize=figSize)
+def makeSubplots (nRows, nCols, labelDict={}):
+    figSize = (5 * _cm2inch(5), _cm2inch(15))
+    figSize = (figSize[0] * nCols, figSize[1] * nRows)
+    (fig, axes) = plt.subplots(squeeze=False, nrows=nRows, ncols=nCols, figsize=figSize)
     for ax in axes.flat:
-        _setLabel(ax, labelDict)
         ax.grid(axis="y")
+        _setLabel(ax, labelDict)
     return (fig, axes)
 
 # ====================================================================================================
@@ -81,9 +96,9 @@ def _setLabel (ax, labelDict):
     if labelDict.get("title"):
         ax.set_title(labelDict.get("title"), fontsize=10)
     if labelDict.get("xlabel"):
-        ax.set_title(labelDict.get("xlabel"), fontsize=7)
+        ax.set_xlabel(labelDict.get("xlabel"), fontsize=10)
     if labelDict.get("ylabel"):
-        ax.set_title(labelDict.get("ylabel"), fontsize=7)
+        ax.set_ylabel(labelDict.get("ylabel"), fontsize=10)
 
 def _cm2inch(val):
     return val / 2.54

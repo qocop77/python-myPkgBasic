@@ -1,6 +1,12 @@
 from datetime import datetime
 import xlsxwriter
 import pandas as pd
+import matplotlib.pyplot as plt
+import myPkgBasic.myPlot as myBasicPlot
+
+# ====================================================================================================
+# Public
+# ====================================================================================================
 
 def initExcel(outFile):
     writer = pd.ExcelWriter(outFile, engine="xlsxwriter")
@@ -15,26 +21,38 @@ def closeExcel(writer):
     print ("Create output file of {}".format(outFile))
     writer.close()
 
+def writeDfMyplot (figFile, scaleDict, locDict, outSName, writer):
+    writer.sheets[outSName].insert_image(locDict["row"], locDict["col"], figFile, scaleDict)
 
-def writeExcel(writer, df, sRow, sCol):
-    df.to_excel(writer, sheet_name=df.name, index=True, startrow=sRow, startcol=sCol)
+def writeDfChart (df, cType, labelDict, scaleDict, locDict, outSName, writer):
+    dataRow = 3
+    dataCol = 1
+    dataSName = df.name
+    worksheet = writer.book.get_worksheet_by_name(dataSName)
+    if worksheet is None:
+        df.to_excel(writer, sheet_name=dataSName, index=True, startrow=dataRow, startcol=dataCol)
+    if cType == 1:
+        chart = writer.book.add_chart(dict(type='line'))
+    else:
+        chart = writer.book.add_chart(dict(type='line'))
+    _setLabel(chart, labelDict)
+    chart.set_legend({"position": 'bottom'})
+    for colIdx in range(len(df.columns)):
+        chart.add_series(dict(
+            name=[dataSName, dataRow, dataCol+colIdx+1]
+            , values=[dataSName, dataRow+1, dataCol+colIdx+1, dataRow+len(df), dataCol+colIdx+1]
+            , marker={'type': 'automatic'}
+        ))
+    writer.sheets[outSName].insert_chart(locDict["row"], locDict["col"], chart, scaleDict)
 
-# def drawBoxplotExl(writer, dfList, nameDict, pctAddList=[], annoPctList=[]):
-#     sRow = 3
-#     sCol = 1
-#     for df in dfList:
-#         writeExl(writer, df, sRow, sCol)
-#     sheetName = "chartAll"
-#     worksheet = writer.book.add_worksheet(sheetName)
-#     chart1 = writer.book.add_chart(dict(type='line'))
-#     chart1.set_legend(dict(position='bottom'))
-#     chart1.set_title(dict(name=nameDict["titleName"]))
-#     chart1.set_x_axis(dict(name=nameDict["xAxisName"]))
-#     chart1.set_y_axis(dict(name=nameDict["yAxisName"], min=0))
-#     for df in dfList:
-#         chart1.add_series(dict
-#             ( values= [df.name, sRow+1, sCol+1, sRow+len(df), sCol+1]
-#             )
-#         )
-#     sheetName = "BM_1"
-#     writer.sheets[sheetName].insert_chart(sRow, sCol+5, chart1, dict(x_scale=2, yscale=1))
+# ====================================================================================================
+# Private
+# ====================================================================================================
+
+def _setLabel (chart, labelDict):
+    if labelDict.get("title"):
+        chart.set_title({"name": labelDict.get("title")})
+    if labelDict.get("xlabel"):
+        chart.set_x_axis({"name": labelDict.get("xlabel")})
+    if labelDict.get("ylabel"):
+        chart.set_y_axis({"name": labelDict.get("ylabel")})
